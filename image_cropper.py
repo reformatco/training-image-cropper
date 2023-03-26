@@ -12,25 +12,26 @@ if crop_size == "":
 
 # Validate the crop size format
 if not re.match(r"^\d{3,4}x\d{3,4}$", crop_size):
-    print("Error: Please enter the crop size in the format 512x512")
-    exit(1)
+    print("Error: Please enter the crop size in the format 'widthxheight', e.g. '512x512'")
+    exit()
 
 # Parse the crop size
 crop_width, crop_height = map(int, crop_size.split("x"))
 
-# Prompt the user to enter the new file name
-new_file_name = input("Enter the new file name (leave blank to use the original file name): ")
+# Prompt the user to enter the new file name (optional)
+new_file_name = input("Enter a new file name (leave blank to keep the original file name): ")
 
 # Output a message to indicate that the processing has started
-if new_file_name:
-    print(f"Processing JPEG files in {dir_path} and renaming to {new_file_name}...")
-else:
-    print(f"Processing JPEG files in {dir_path}...")
+print(f"Processing image files in {dir_path}...")
 
 # Initialize a cascade classifier for face detection (optional)
 face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-# Loop through all files in the directory
+# Create the output directory
+output_dir_path = os.path.join(os.path.dirname(dir_path), "output", os.path.basename(dir_path))
+os.makedirs(output_dir_path, exist_ok=True)
+
+# Loop through all image files in the directory
 i = 1
 for file in os.listdir(dir_path):
     if file.lower().endswith((".jpg", ".jpeg", ".webp", ".png")):
@@ -53,25 +54,36 @@ for file in os.listdir(dir_path):
             # If faces are detected, crop around the first face
             x, y, w, h = faces[0]
 
-        # Crop the image around the detected region
-        crop_x = max(x + w/2 - crop_width/2, 0)
-        crop_y = max(y + h/2 - crop_height/2, 0)
-        crop_img = img[int(crop_y):int(crop_y+crop_height), int(crop_x):int(crop_x+crop_width)]
+        # Calculate the cropping region
+        center_x, center_y = x + w/2, y + h/2
+        crop_x1, crop_y1 = int(center_x - crop_width/2), int(center_y - crop_height/2)
+        crop_x2, crop_y2 = crop_x1 + crop_width, crop_y1 + crop_height
 
-        # Save the cropped image
+        # Crop the image around the detected region
+        crop_img = img[crop_y1:crop_y2, crop_x1:crop_x2]
+
+        # Resize the cropped image to 512x512
+        if crop_img.size != 0:
+            resized_img = cv2.resize(crop_img, (512, 512), interpolation=cv2.INTER_AREA)
+        else:
+            print(f"Error: {file} has zero size and could not be cropped")
+            continue
+
+
+        # Save the cropped and resized image
         if new_file_name:
             new_filename = f"{new_file_name}-{i}.jpg"
-            cv2.imwrite(os.path.join(dir_path, new_filename), crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
         else:
             new_filename = os.path.splitext(file)[0] + ".jpg"
-            cv2.imwrite(os.path.join(dir_path, new_filename), crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+        output_file_path = os.path.join(output_dir_path, new_filename)
+        cv2.imwrite(output_file_path, resized_img)
+        print(f"Saved {output_file_path}")
 
-        # Output a message to indicate that the image has been processed
-        if new_file_name:
-            print(f"Cropped and renamed image {new_filename}")
-        else:
-            print(f"Cropped image {file}")
+        # Increment the counter
         i += 1
 
-# Output a message to indicate that the processing has finished
-print("Processing complete.")
+        # Output a message to indicate that the processing of the current file is complete
+        print(f"Processing complete for {file}")
+
+        # Output a message to indicate that the processing of all files is complete
+        print("All image files processed.")
