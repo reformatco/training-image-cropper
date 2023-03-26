@@ -1,22 +1,39 @@
 import cv2
 import os
+import re
 
 # Prompt the user to enter the directory path
 dir_path = input("Enter the directory path: ")
 
-# Prompt the user to enter the crop size
-crop_size = input("Enter the crop size (e.g. 512x512): ")
+# Prompt the user to enter the crop size (default to 512x512)
+crop_size = input("Enter the crop size (default is 512x512): ")
+if crop_size == "":
+    crop_size = "512x512"
+
+# Validate the crop size format
+if not re.match(r"^\d{3,4}x\d{3,4}$", crop_size):
+    print("Error: Please enter the crop size in the format 512x512")
+    exit(1)
+
+# Parse the crop size
 crop_width, crop_height = map(int, crop_size.split("x"))
 
+# Prompt the user to enter the new file name
+new_file_name = input("Enter the new file name (leave blank to use the original file name): ")
+
 # Output a message to indicate that the processing has started
-print(f"Processing JPEG files in {dir_path}...")
+if new_file_name:
+    print(f"Processing JPEG files in {dir_path} and renaming to {new_file_name}...")
+else:
+    print(f"Processing JPEG files in {dir_path}...")
 
 # Initialize a cascade classifier for face detection (optional)
 face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-# Loop through all JPEG files in the directory
+# Loop through all files in the directory
+i = 1
 for file in os.listdir(dir_path):
-    if file.endswith(".jpg"):
+    if file.lower().endswith((".jpg", ".jpeg", ".webp", ".png")):
         # Load the image
         img_path = os.path.join(dir_path, file)
         img = cv2.imread(img_path)
@@ -42,7 +59,19 @@ for file in os.listdir(dir_path):
         crop_img = img[int(crop_y):int(crop_y+crop_height), int(crop_x):int(crop_x+crop_width)]
 
         # Save the cropped image
-        cv2.imwrite(img_path, crop_img)
+        if new_file_name:
+            new_filename = f"{new_file_name}-{i}.jpg"
+            cv2.imwrite(os.path.join(dir_path, new_filename), crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+        else:
+            new_filename = os.path.splitext(file)[0] + ".jpg"
+            cv2.imwrite(os.path.join(dir_path, new_filename), crop_img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+
+        # Output a message to indicate that the image has been processed
+        if new_file_name:
+            print(f"Cropped and renamed image {new_filename}")
+        else:
+            print(f"Cropped image {file}")
+        i += 1
 
 # Output a message to indicate that the processing has finished
 print("Processing complete.")

@@ -1,5 +1,26 @@
 # Image cropper
 
+Simple image cropper that allows you to specify a directory and then crop all images inside to the required size. Created for making dataset images for training Stable Diffusion.
+
+Any images smaller than the crop size will be deleted.
+
+## Built With
+
+- Python - The programming language used
+- OpenCV - The computer vision library used
+
+## Authors
+
+- Ben Palmer
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE.md file for details.
+
+## Acknowledgments
+
+- Hat tip to ChatGPT for making all this
+
 ## Instructions
 
 Install virtualenv using pip on the new computer (if it's not already installed):
