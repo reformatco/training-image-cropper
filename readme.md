@@ -21,6 +21,9 @@ This project is licensed under the MIT License - see the LICENSE.md file for det
 
 - Hat tip to ChatGPT for making all this
 
+### TODO
+[ ] Add `https://github.com/eugenesiow/super-image` for upscaling
+
 ## Instructions
 
 Install virtualenv using pip on the new computer (if it's not already installed):
